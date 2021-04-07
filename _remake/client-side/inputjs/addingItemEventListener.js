@@ -9,7 +9,7 @@ import { callOnAddItemCallbacks } from './callbacks';
 import optionsData from './optionsData';
 const camelCase = require('lodash/camelCase');
 
-function _defaultAddItemCallback ({templateName, listElem, whereToInsert}) {
+function _defaultAddItemCallback ({templateName, listElem, whereToInsert, autoedit }) {
   // pass the template name into an endpoint and get the resulting html back
   ajaxPost("/new", {templateName}, function (ajaxResponse) {
     let {htmlString, success} = ajaxResponse;
@@ -29,8 +29,9 @@ function _defaultAddItemCallback ({templateName, listElem, whereToInsert}) {
 
     // save needs to be called on the list element, not the item, so it doesn't try to save to a non-existent id
     callSaveFunction(listElem);
-    
+
     let itemElem = whereToInsert === "afterbegin" ? listElem.firstElementChild : listElem.lastElementChild;
+    if (autoedit) itemElem.click();
     callOnAddItemCallbacks({success: true, listElem, itemElem, templateName, ajaxResponse});
   });
 }
@@ -38,7 +39,7 @@ function _defaultAddItemCallback ({templateName, listElem, whereToInsert}) {
 export default function () {
   onAttributeEvent({
     eventTypes: ["click"],
-    partialAttributeStrings: ["new:"], 
+    partialAttributeStrings: ["new:"],
     filterOutElemsInsideAncestor: "[disable-events]",
     callback: ({matchingElement, matchingAttribute}) => {
       let templateName = camelCase(matchingAttribute.substring("new:".length));
@@ -51,12 +52,10 @@ export default function () {
       let listElem = findNearest({elem: matchingElement, selector});
 
       if (!optionsData._defaultAddItemCallback) {
-        _defaultAddItemCallback({templateName, listElem, whereToInsert});
+        _defaultAddItemCallback({templateName, listElem, whereToInsert, autoedit: true });
       } else {
-        optionsData._defaultAddItemCallback({templateName, listElem, whereToInsert});        
+        optionsData._defaultAddItemCallback({templateName, listElem, whereToInsert, autoedit: true});
       }
     }
   });
 }
-
-

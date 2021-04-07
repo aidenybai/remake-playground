@@ -116,124 +116,124 @@ export default function () {
       - How does it access the array context
       - How is it possible to achieve the first two points w/o adding additional complexity?
   */
-  onAttributeEvent({
-    eventTypes: ["click"],
-    partialAttributeStrings: ["new:"],
-    groupMatchesIntoSingleCallback: true,
-    filterOutElemsInsideAncestor: "[disable-events]",
-    callback: (matches) => { // matches: [{eventType, matchingElement, matchingAttribute, matchingPartialAttributeString}]
-      // editableConfig: [{keyName, formType, removeOption, eventType, matchingElement, matchingAttribute, matchingPartialAttributeString}]
-      let editableConfig = matches.map(({eventType, matchingElement, matchingAttribute, matchingPartialAttributeString}) => {
-        let attributeParts = matchingAttribute.split(":");
-        // attributeParts could be:
-        // ["edit", "example-key"]
-        // ["edit", "example-key", "without-remove"]
-        // ["edit", "example-key", "textarea", "without-remove"]
-        // -> first two items are requireed, the last two are optional
-        let [_, keyName, ...otherOptions] = attributeParts;
+  // onAttributeEvent({
+  //   eventTypes: ["click"],
+  //   partialAttributeStrings: ["new:"],
+  //   groupMatchesIntoSingleCallback: true,
+  //   filterOutElemsInsideAncestor: "[disable-events]",
+  //   callback: (matches) => { // matches: [{eventType, matchingElement, matchingAttribute, matchingPartialAttributeString}]
+  //     // editableConfig: [{keyName, formType, removeOption, eventType, matchingElement, matchingAttribute, matchingPartialAttributeString}]
+  //     let editableConfig = matches.map(({eventType, matchingElement, matchingAttribute, matchingPartialAttributeString}) => {
+  //       let attributeParts = matchingAttribute.split(":");
+  //       // attributeParts could be:
+  //       // ["edit", "example-key"]
+  //       // ["edit", "example-key", "without-remove"]
+  //       // ["edit", "example-key", "textarea", "without-remove"]
+  //       // -> first two items are requireed, the last two are optional
+  //       let [_, keyName, ...otherOptions] = attributeParts;
 
-        let validRemoveOptions = ["with-remove", "without-remove", "with-erase"];
-        let validFormTypes = ["text", "textarea"];
+  //       let validRemoveOptions = ["with-remove", "without-remove", "with-erase"];
+  //       let validFormTypes = ["text", "textarea"];
 
-        // if `otherOptions` includes includes a valid remove option, use that. Otherwise, use default value.
-        let removeOption = validRemoveOptions.find(str => otherOptions.includes(str)) || "with-remove";
-        // if `otherOptions` includes includes a valid form type option, use that. Otherwise, use default value.
-        let formType = validFormTypes.find(str => otherOptions.includes(str)) || "text";
+  //       // if `otherOptions` includes includes a valid remove option, use that. Otherwise, use default value.
+  //       let removeOption = validRemoveOptions.find(str => otherOptions.includes(str)) || "with-remove";
+  //       // if `otherOptions` includes includes a valid form type option, use that. Otherwise, use default value.
+  //       let formType = validFormTypes.find(str => otherOptions.includes(str)) || "text";
 
-        return {keyName, formType, removeOption, eventType, matchingElement, matchingAttribute, matchingPartialAttributeString};
-      });
+  //       return {keyName, formType, removeOption, eventType, matchingElement, matchingAttribute, matchingPartialAttributeString};
+  //     });
 
-      const findNewestElement = (keyNames) => {
-        let selector = [];
-        for (const keyName of keyNames) {
-          selector += `[key\\:${keyName}]`;
-        }
-        const lastElem = document.querySelector(selector.join(', ')).parentElement.lastChild;
-        return lastElem;
-      }
+  //     const findNewestElement = (keyNames) => {
+  //       let selector = [];
+  //       for (const keyName of keyNames) {
+  //         selector += `[key\\:${keyName}]`;
+  //       }
+  //       const lastElem = document.querySelector(selector.join(', ')).parentElement.lastChild;
+  //       return lastElem;
+  //     }
 
-      // get first matching element for positioning popover
-      let firstMatch = editableConfig[0];
-      let firstMatchKeyName = firstMatch.keyName;
+  //     // get first matching element for positioning popover
+  //     let firstMatch = editableConfig[0];
+  //     let firstMatchKeyName = firstMatch.keyName;
 
-      /*
-        I can't figure out a way to get this to work:
+  //     /*
+  //       I can't figure out a way to get this to work:
 
-        Needs to grab the latest element added - but also needs to find by props and downprops
-      */
+  //       Needs to grab the latest element added - but also needs to find by props and downprops
+  //     */
 
-      // Figure out a way to pass firstMatchKeyName and its props, and nested props inside. Can't really do this without context from database
-      let firstMatchElem = findNewestElement([firstMatchKeyName /* pass props */]);
-      let firstMatchRemoveOption = firstMatch.removeOption;
-      let firstMatchTargetElem = getClosestElemWithKey({elem: firstMatchElem, keyName: firstMatchKeyName});
+  //     // Figure out a way to pass firstMatchKeyName and its props, and nested props inside. Can't really do this without context from database
+  //     let firstMatchElem = findNewestElement([firstMatchKeyName/*, pass props */]);
+  //     let firstMatchRemoveOption = firstMatch.removeOption;
+  //     let firstMatchTargetElem = getClosestElemWithKey({elem: firstMatchElem, keyName: firstMatchKeyName});
 
 
-      console.log(firstMatch);
+  //     console.log(firstMatch);
 
-      // Curr firstMatchTargetElem is null because it checks closest
+  //     // Curr firstMatchTargetElem is null because it checks closest
 
-      if (!firstMatchElem || !firstMatchKeyName || !firstMatchTargetElem) {
-        console.log(firstMatchTargetElem);
-        showError(`Problem with the 'new:' attribute on one of these elements:`, matches.map(m => m.matchingElement));
-        return;
-      }
+  //     if (!firstMatchElem || !firstMatchKeyName || !firstMatchTargetElem) {
+  //       console.log(firstMatchTargetElem);
+  //       showError(`Problem with the 'new:' attribute on one of these elements:`, matches.map(m => m.matchingElement));
+  //       return;
+  //     }
 
-      let editablePopoverElem = document.querySelector(".remake-edit");
+  //     let editablePopoverElem = document.querySelector(".remake-edit");
 
-      // reset popover: remove old keys
-      removeObjectKeysFromElem({elem: editablePopoverElem});
+  //     // reset popover: remove old keys
+  //     removeObjectKeysFromElem({elem: editablePopoverElem});
 
-      // open popover
-      let hasRemove = firstMatchRemoveOption === "with-remove";
-      let hasErase = firstMatchRemoveOption === "with-erase";
-      editablePopoverElem.setAttribute(`temporary:key:remake-edit-popover`, "");
-      editablePopoverElem.setAttribute(`temporary:key:remake-edit-option-has-remove`, "");
-      editablePopoverElem.setAttribute(`temporary:key:remake-edit-option-has-erase`, "");
-      setValueForKeyName({elem: editablePopoverElem, keyName: "remake-edit-popover", value: "on"});
-      setValueForKeyName({elem: editablePopoverElem, keyName: "remake-edit-option-has-remove", value: hasRemove ? "on" : "off"});
-      setValueForKeyName({elem: editablePopoverElem, keyName: "remake-edit-option-has-erase", value: hasErase ? "on" : "off"});
+  //     // open popover
+  //     let hasRemove = firstMatchRemoveOption === "with-remove";
+  //     let hasErase = firstMatchRemoveOption === "with-erase";
+  //     editablePopoverElem.setAttribute(`temporary:key:remake-edit-popover`, "");
+  //     editablePopoverElem.setAttribute(`temporary:key:remake-edit-option-has-remove`, "");
+  //     editablePopoverElem.setAttribute(`temporary:key:remake-edit-option-has-erase`, "");
+  //     setValueForKeyName({elem: editablePopoverElem, keyName: "remake-edit-popover", value: "on"});
+  //     setValueForKeyName({elem: editablePopoverElem, keyName: "remake-edit-option-has-remove", value: hasRemove ? "on" : "off"});
+  //     setValueForKeyName({elem: editablePopoverElem, keyName: "remake-edit-option-has-erase", value: hasErase ? "on" : "off"});
 
-      // keep track of the source of the data on the popover element
-      $.data(editablePopoverElem, "source", firstMatchTargetElem);
+  //     // keep track of the source of the data on the popover element
+  //     $.data(editablePopoverElem, "source", firstMatchTargetElem);
 
-      // add object keys for storing data that's being edited in the popover
-      addObjectKeysToElem({elem: editablePopoverElem, config: editableConfig});
+  //     // add object keys for storing data that's being edited in the popover
+  //     addObjectKeysToElem({elem: editablePopoverElem, config: editableConfig});
 
-      // sync data from the page into the popover
-      syncDataNextTick({
-        sourceElement: firstMatchElem,
-        targetElement: editablePopoverElem,
-        keyNames: editableConfig.map(obj => obj.keyName),
-        shouldSyncIntoUpdateElems: true
-      });
+  //     // sync data from the page into the popover
+  //     syncDataNextTick({
+  //       sourceElement: firstMatchElem,
+  //       targetElement: editablePopoverElem,
+  //       keyNames: editableConfig.map(obj => obj.keyName),
+  //       shouldSyncIntoUpdateElems: true
+  //     });
 
-      // render html inside the edit popover
-      let remakeEditAreasElem = editablePopoverElem.querySelector(".remake-edit__edit-areas");
-      remakeEditAreasElem.innerHTML = generateRemakeEditAreas({config: editableConfig});
+  //     // render html inside the edit popover
+  //     let remakeEditAreasElem = editablePopoverElem.querySelector(".remake-edit__edit-areas");
+  //     remakeEditAreasElem.innerHTML = generateRemakeEditAreas({config: editableConfig});
 
-      // copy the layout
-      copyLayout({
-        sourceElem: firstMatchElem,
-        targetElem: editablePopoverElem,
-        dimensionsName: "width",
-        xOffset: 0,
-        yOffset: 0
-      });
+  //     // copy the layout
+  //     copyLayout({
+  //       sourceElem: firstMatchElem,
+  //       targetElem: editablePopoverElem,
+  //       dimensionsName: "width",
+  //       xOffset: 0,
+  //       yOffset: 0
+  //     });
 
-      // autosize textareas -- not sure why or even if this needs to be in a setTimeout
-      setTimeout(function () {
-        let textareas = Array.from(editablePopoverElem.querySelectorAll("textarea"));
-        textareas.forEach(el => autosize(el));
-      });
+  //     // autosize textareas -- not sure why or even if this needs to be in a setTimeout
+  //     setTimeout(function () {
+  //       let textareas = Array.from(editablePopoverElem.querySelectorAll("textarea"));
+  //       textareas.forEach(el => autosize(el));
+  //     });
 
-      // focus first focusable element
-      let firstFormInput = editablePopoverElem.querySelector("textarea, input")
-      if (firstFormInput) {
-        firstFormInput.focus();
-      }
+  //     // focus first focusable element
+  //     let firstFormInput = editablePopoverElem.querySelector("textarea, input")
+  //     if (firstFormInput) {
+  //       firstFormInput.focus();
+  //     }
 
-    }
-  });
+  //   }
+  // });
 
   // sync data from popover into the page
   $.on("submit", "[sync]", (event) => {
