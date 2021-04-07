@@ -52,9 +52,9 @@ export default function () {
       let listElem = findNearest({elem: matchingElement, selector});
 
       if (!optionsData._defaultAddItemCallback) {
-        _defaultAddItemCallback({templateName, listElem, whereToInsert, autoedit: true });
+        _defaultAddItemCallback({templateName, listElem, whereToInsert, autoedit: matchingElement.hasAttribute('edit') });
       } else {
-        optionsData._defaultAddItemCallback({templateName, listElem, whereToInsert, autoedit: true});
+        optionsData._defaultAddItemCallback({templateName, listElem, whereToInsert, autoedit: matchingElement.hasAttribute('edit') });
       }
     }
   });
